@@ -10,7 +10,7 @@ docname: draft-giron-acme-pqc-negotiation-00
 submissiontype: independent  # also: "independent", "IAB", or "IRTF"
 number:
 date:
-consensus: true
+#consensus: true
 v: 0
 area: AREA
 workgroup: WG Working Group
