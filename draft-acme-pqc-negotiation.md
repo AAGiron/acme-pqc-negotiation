@@ -1,17 +1,17 @@
 ---
 ###
-#  draft-acme-pqc-negotiation
+#  draft-giron-acme-pqc-negotiation-00
 
 title: "ACME PQC Algorithm Negotiation"
 abbrev: "acme-pqc-algo-neg"
 category: info
 
-docname: draft-acme-pqc-negotiation-latest
+docname: draft-giron-acme-pqc-negotiation-00
 submissiontype: independent  # also: "independent", "IAB", or "IRTF"
 number:
 date:
 consensus: true
-v: 3
+v: 0
 area: AREA
 workgroup: WG Working Group
 keyword:
@@ -28,9 +28,9 @@ venue:
 
 author:
  -
-    fullname: Your Name Here
-    organization: Your Organization Here
-    email: your.email@example.com
+    fullname: Alexandre Augusto Giron
+    organization: Federal University of Technology - Parana (UTFPR)
+    email: alexandregiron@utfpr.edu.br
 
 normative:
 
