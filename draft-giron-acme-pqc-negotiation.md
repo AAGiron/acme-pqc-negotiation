@@ -61,7 +61,7 @@ This document describes an algorithm negotiation procedure for ACME. The process
 
 # 2 Certificate Algorithm Negotiation
 
-In order to allow ACME client implementations to select their preferred certificate algorithm set, this document specifies servers to implement a new endpoint named /cert-algorithms. The new endpoint can be reached without the need of an account with the server, thus saving resources. As PQC standardization evolves, this document does not specifies one default configuration or algorithm. ACME implementations can select their preferred (or default) configurations, but they should also allow users to choose at least in the first certificate issuance (renewals can be automated with the same configuration). 
+In order to allow ACME client implementations to select their preferred certificate algorithm set, this document specifies servers to implement a new endpoint named /cert-algorithms. The new endpoint can be reached after a GET /dir (see Figure 1 below). The client does not need to create an account with the server, thus saving resources. As PQC standardization evolves, this document does not specify one default configuration or algorithm. ACME implementations can select their preferred (or default) configurations, but they should also allow users to choose at least in the first certificate issuance (renewals can be automated with the same configuration). 
 
  +------+                       +------+
  | ACME |                       | ACME |
@@ -75,7 +75,7 @@ In order to allow ACME client implementations to select their preferred certific
     |    GET /new-nonce            |
     |----------------------------->|
     |<-----------------------------+
-    |                        200   |
+    |                   HTTP 200   |
     |                              |
     |    GET /cert-algorithms      |
     |----------------------------->|
@@ -88,14 +88,13 @@ Figure 1: Obtaining algorithm support information
 
 ## 2.1 Issuance processes for KEM Certificates
 
-Depending on the server's support, it might implement one or several classical, PQC and hybrid PQC algorithms for certificates. In this context, hybrid algorithms are often referred as "composite" [Ounsworth draft], in which cryptographic objects are concatenated in a single structure. If the algorithm supported by the server is a signature algorithm, the server replies with the corresponding OID; this is the same as if hybrids are allowed (assuming the composite model and corresponding OIDs [Ounsworth draft]). However, in the time of this writing, ACME does not issue KEM certificates. 
+Depending on the server's support, the server might implement one or several classical, PQC, and hybrid PQC algorithms for certificates. In this context, hybrid algorithms are often called "composite" [Ounsworth draft], in which cryptographic objects are concatenated in a single structure. If the algorithm supported by the server is a signature algorithm, the server replies with the corresponding OID; this is the same as if hybrids are allowed (assuming the composite model and corresponding OIDs [Ounsworth draft]). However, at the time of this writing, ACME does not issue KEM certificates. 
 
-
-On the other hand, Güneysu et al. showed how to build a CSR-like process in order to issue a KEM certificate [Güneysu et al., 2022]. In theory, ACME could use such a method to issue a KEM certificate without significant changes at the protocol level. However, PoP using verifiable generation for KEMs has some drawbacks:
-- So far it is proposed for Kyber and FrodoKEM only. Although the method can be applied to other algorithms as well, the security proofs are in a "per-algorithm" basis. 
+On the other hand, Güneysu et al. showed how to build a CSR-like process to issue a KEM certificate [Güneysu et al., 2022]. In theory, ACME could use such a method to issue a KEM certificate without significant changes at the protocol level. However, PoP using verifiable generation for KEMs has some drawbacks:
+- So far, the method is proposed for Kyber and FrodoKEM only. Although the method can also be applied to other algorithms, the security proofs are on a "per-algorithm" basis. 
 - The method increase sizes, consequently increasing the communication cost for the ACME's protocol.  
 
-The emphasis of this document is on the KEMTLS certificate use case. KEMTLS aims to reduce the size of cryptographic objects for the PQC migration context. KEMTLS can reduce byte costs for a post-quantum TLS, but at a cost of increasing sizes in ACME by using verifiable generation processes. Therefore, in this document, we define a KEMTLS certificate (the subject's public key is a KEM public key but it is signed by the Issuer CA) and specify how the ACME protocol could issue such a certificate, taking into consideration the protocol's performance. 
+The emphasis of this document is on the KEMTLS certificate use case. KEMTLS aims to reduce the size of cryptographic objects for the PQC migration context. KEMTLS can reduce byte costs for a post-quantum TLS but at the cost of increasing sizes in ACME by using verifiable generation processes. Therefore, in this document, we define a KEMTLS certificate (the subject's public key is a KEM public key, but the Issuer CA signs it) and specify how the ACME protocol could issue such a certificate, considering its performance. 
 
 ## 2.2 Algorithm List Definition
 
@@ -120,11 +119,11 @@ Upon GET requests to the /cert-algorithms endpoint, ACME servers reply with a JS
 }
 
 
-Servers MUST provide such a list with at least one algorithm. Note the distinction between Signatures, KEMTLS and KEM-POP, as an alternative of telling the clients a different naming to support (possible) different issuance processes. Moreover, the OIDs presented on this list are from the OQS project [Stebila and Mosca, 2016], but they are subject to change whenever the Internet drafts evolve (such as [Ounsworth draft]).
+Servers MUST provide such a list with at least one algorithm. Note the distinction between Signatures, KEMTLS, and KEM-POP, as an alternative to telling the clients a different naming to support (possibly) different issuance processes. Moreover, the OIDs presented on this list are from the OQS project [Stebila and Mosca, 2016], but they are subject to change whenever the Internet drafts evolve (such as [Ounsworth draft]).
 
 # 3 KEM Certificate Issuance Modes
 
-ACME Certificate issuance process does not require modifications when issuing PQC signature certificates. However, for KEM certificates, this document proposes the following changes to the ACME protocol. Assuming that the ACME client has already performed account registration and challenge, Figures 2 and 3 show two ways for issuing a KEM certificate. Figure 2 requires 3 RTTs, while Figure 3 optimizes performance to 1 RTT. The main difference is that the optimized mode does not guarantee key confirmation. Therefore, the ACME server should enforce the 3-RTT mode if it is required to confirm that the client actually possesses the certificate's private key. If performance is desired, the 1-RTT mode is suitable since it reduces the number of signed requests and polling time.
+ACME Certificate issuance process does not require modifications when issuing PQC signature certificates. However, this document proposes the following changes to the ACME protocol for KEM certificates. Assuming that the ACME client has already performed account registration and challenge, Figures 2 and 3 show two ways to issue a KEM certificate. Figure 2 requires 3 RTTs, while Figure 3 optimizes performance to 1 RTT. The main difference is that the optimized mode does not guarantee key confirmation. Therefore, the ACME server should enforce the 3-RTT mode if it is required to confirm that the client actually possesses the certificate's private key. If performance is desired, the 1-RTT mode is suitable since it reduces the number of signed requests and polling time.
 
      +------+                       +------+                    +------+                       +------+
      | ACME |                       | ACME |                    | ACME |                       | ACME |
@@ -155,20 +154,55 @@ ACME Certificate issuance process does not require modifications when issuing PQ
 Figure 2: 3-RTT KEMTLS Certificate Issuance Process        Figure 3: 1-RTT KEMTLS Certificate Issuance Process
 
 
-Figure 2 shows the 3-RTT mode. The client can not use a CSR for a KEMTLS certificate, so it generates a key pair, and send a "modified CSR", where the public key is a KEM public key, and the signature is random (dummy) data. The server then identifies and extract the mode and the KEM public key from the modified CSR. Having implemented the KEM algorithm, the server encaps under the client's public key sending back the ciphertext to the client. The client performs a decapsulation and confirm the shared secret using the /key-confirm endpoint. ACME servers willing to issue KEMTLS certificates MUST implement this endpoint. 
+Figure 2 shows the 3-RTT mode. The client can not use a CSR for a KEMTLS certificate, so it generates a key pair and send a "modified CSR", where the public key is a KEM public key, and the signature is random (dummy) data. The server then identifies and extracts the mode and the KEM public key from the modified CSR. Having implemented the KEM algorithm, the server encapsulates under the client's public key sending back the ciphertext to the client. The client performs a decapsulation and confirms the shared secret using the /key-confirm endpoint. ACME servers willing to issue KEMTLS certificates MUST implement this endpoint. 
 
-Figure 3 shortens the KEMTLS process because it replies a ciphertext and the encrypted certificate before key confirmation. Since it is encrypted, clients without the private key will not be able to use the certificate. Having the private key, the client decapsulates the shared secret Z and derives a symmetric key from it (see Section 3.2). The symmetric key is used to decrypt the certificate. In this way, issuing a KEMTLS certificate does not impose additional RTTs when compared to the 1-RTT CSR standard process, i.e., POSTing a CSR to /finalize. The 3-RTT mode, on the other hand, imposes the RTT related to the key-confirmation endpoint.  
+Figure 3 shortens the KEMTLS process because it replies a ciphertext and the encrypted certificate before key confirmation. Since it is encrypted, clients without the private key cannot use the certificate. Having the private key, the client decapsulates the shared secret Z and derives a symmetric key from it (see Section 3.2). The symmetric key is used to decrypt the certificate. In this way, issuing a KEMTLS certificate does not impose additional RTTs compared to the 1-RTT CSR standard process, i.e., POSTing a CSR to /finalize. The 3-RTT mode, on the other hand, imposes the RTT related to the key-confirmation endpoint.   
 
-Note, however, that key confirmation can be addressed differently in the 1-RTT mode. First, ACME servers could limit the use of this mode or ask for a delayed key confirmation, depending on CA policies (see Section 5 for a discussion).  Secondly, if required, ACME servers could establish a TLS handshake with the client's domain in a later (perhaps more convenient) moment. A valid TLS handshake would tell  that the client was able to use the encrypted certificate, thus proving possession of the private key. Lastly, for the applications where it is enough to prove possession of the account's private key (and not the certificate), the 1-RTT mode could be used. 
+Note, however, that key confirmation can be addressed differently in the 1-RTT mode. First, ACME servers could limit the use of this mode or ask for a delayed key confirmation, depending on CA policies (see Section 5 for a discussion). Secondly, if required, ACME servers could establish a TLS handshake with the client's domain at a later (perhaps more convenient) moment. A valid TLS handshake would tell that the client could use the encrypted certificate, thus proving possession of the private key. Lastly, for the applications where it is enough to prove possession of the account's private key (and not the certificate), the 1-RTT mode could be used. 
 
 
 ## 3.1 POST Examples
 
-Examples
+Considering the first POST to /finalize (Figure 2), which would be similar to a standard POST [RFC 8555], an example of a reply would be as follows. This example considers a CSR built with a KEM public key (Kyber-512) and dummy data in the CSR's signature.
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Replay-Nonce: CGf81JWBsq8QyIgPCi9Q9X
+Link: <https://example.com/acme/directory>;rel="index"
+{
+  "key-confirm-data": {
+    "ct": "9HwLdArXTDC/otcTWNWYcOgRxWOeUahZj3Ri7SrKlCo4syv...Cl79urEXkhoUhWcqWzb2",
+    "ct-alg": "Kyber-512"
+  },
+  "key-confirm-url": "https://example.com/key-confirm/Rg5dV14Gh1Q"
+}
+
+Note that this reply contains the 'key-confirm-data' and 'key-confirm-url' so ACME clients can proceed accordingly. After decapsulating the shared secret from "ct", the client can POST to the key confirm URL.
+
+POST /key-confirm/Rg5dV14Gh1Q HTTP/1.1
+Host: example.com
+Content-Type: application/jose+json
+
+{
+     "protected": base64url({
+       "alg": "Dilithium2",
+       "kid": "https://example.com/acme/acct/evOfKhNU60wg",
+       "nonce": "Q_s3MWoqT05TrdkM2MTDcw",
+       "url": "https://example.com/key-confirm/Rg5dV14Gh1Q"
+     }),
+     "payload": base64url({
+       "Z": "r0Sk+fqvfceIetPIdszNs7PMylb3G/B536mZDj0B8Rs="
+     }),
+     "signature": "9cbg5JO1Gf5YLjjz...SpkUfcdPai9uVYYQ"
+}
+
+The POST is signed with Dilithium2 in this example. Note that the client is sending "Z" back in a secure channel (i.e., an underlying TLS connection between the ACME peers), so Z is not being disclosed to a passive attacker. The shared secret Z is used to prove the private key's possession. The ACME server compares the received Z with the order's information and starts issuing the certificate. If Z mismatches the server's storage, an HTTP error 401 is sent. If Z matches, there are no further modifications in the protocol, so the client and server proceed as RFC 8555 [RFC 8555] dictates, i.e., clients start polling until their certificates are ready to be downloaded. 
 
 ## 3.2 Encrypting a KEM Certificate
 
-Key derivation function for Z. Symmetric algorithms specs.
+TODO:
+- Key derivation function for Z. 
+- Symmetric algorithms specs for encrypting the certificate.
 
 # 4 Conventions and Definitions
 
@@ -177,9 +211,9 @@ Key derivation function for Z. Symmetric algorithms specs.
 
 # 5 Security Considerations
 
-TODO Security (CA policies; key confirmation, proof-of-possession assumption on the 1-RTT mode)
-
-//Not verifying the CSR in the 3-RTT mode for compatibility purposes (like GREASE mode); servers might try to instantiate CSR objects  from the POST request data. Random (dummy) data would avoid breaking implementations.
+TODO:
+- Security (CA policies; key confirmation, proof-of-possession assumption on the 1-RTT mode)
+- Not verifying the CSR in the 3-RTT mode for compatibility purposes (like GREASE mode); servers might try to instantiate CSR objects  from the POST request data. Random (dummy) data would avoid breaking implementations.
 
 # IANA Considerations
 
