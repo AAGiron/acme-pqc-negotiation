@@ -1,12 +1,12 @@
 ---
 ###
-#  draft-giron-acme-pqc-negotiation
+#  draft-giron-acme-pqcnegotiation
 
 title: "ACME PQC Algorithm Negotiation"
-abbrev: "acme-pqc-algo-neg"
+abbrev: "acme-algoneg"
 category: info
 
-docname: draft-giron-acme-pqc-negotiation-latest
+docname: draft-giron-acme-pqcnegotiation-latest
 
 submissiontype: independent
 
