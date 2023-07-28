@@ -68,8 +68,6 @@ normative:
 [RFC9162] Laurie, B., Messeri, E., and R. Stradling, "Certificate Transparency Version 2.0", RFC 9162, DOI 10.17487/RFC9162, December 2021, <https://www.rfc-editor.org/info/rfc9162>.
 
 
-
-
 informative:
 
 [CTlog] Merkle Town: Cloudflare CT log viewer. Available at: <https://ct.cloudflare.com/>.
@@ -324,5 +322,8 @@ This document has no IANA actions.
 {:numbered="false"}
 
 Victor do Valle Cunha 
+Federal University of Santa Catarina, Brazil
+
+Ricardo Custódio 
 Federal University of Santa Catarina, Brazil
 
