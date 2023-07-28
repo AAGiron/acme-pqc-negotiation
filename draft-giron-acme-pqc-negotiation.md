@@ -6,7 +6,7 @@ title: "ACME PQC Algorithm Negotiation"
 abbrev: "acme-pqc-algo-neg"
 category: info
 
-docname: draft-giron-acme-pqc-negotiation
+docname: draft-giron-acme-pqc-negotiation-latest
 
 submissiontype: independent
 
