@@ -1,12 +1,12 @@
 ---
 ###
-#  draft-giron-acme-pqc-negotiation-00
+#  draft-giron-acme-pqc-negotiation
 
 title: "ACME PQC Algorithm Negotiation"
 abbrev: "acme-pqc-algo-neg"
 category: info
 
-docname: draft-giron-acme-pqc-negotiation-00
+docname: draft-giron-acme-pqc-negotiation
 
 submissiontype: independent
 
@@ -288,28 +288,33 @@ When receiving an encrypting certificate, it concludes the 1-RTT mode. Therefore
 
 {::boilerplate bcp14-tagged}
 
+KEM Certificate: a X.509 certificate where the subject's public key is from a Key-Encapsulation Mechanism (KEM) but the signature comes from the Issuer Certificate Authority (CA) digital signature scheme.
+
+3-RTT Mode: a modification in ACME to allow issuance of KEM certificates with explicit key confirmation.
+
+1-RTT Mode: a modification in ACME to allow issuance of KEM certificates without key confirmation, delayed or implicit key confirmation     .
 
 # 5 Security Considerations
 
-As stated by RFC 8555 [RFC8555], ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, which should be open for clients to query it. ACME servers could control the number of queries to this endpoint by controlling the nonces, in order to avoid Denial-of-Service (DoS). The second modification is a feature, ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST [NISTPQC].  Given the ongoing PQC standardization, new algorithms can appear as well as new attacks on established schemes, meaning that the recommendation for algorithm support can change in the future. 
+RFC 8555 [RFC8555] states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, which should be open for clients to query. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST [NISTPQC]. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future. 
 
-RFC 8555 states that ACME clients prove the possession of the private keys for their certificate requests [RFC8555]. This document follows this guideline explicitly in the 3-RTT mode for KEM certificates. On the other hand, in the 1-RTT mode, key confirmation is implicit. It is assumed that an encrypted KEM certificate is not useful to anyone but the owner of the KEM private key. Therefore, if the certificate is being used it means that the client holds the private key as expected. Moreover, this document provides a guideline on how to perform a "delayed" key confirmation, i.e., by POSTing to the /key-confirm endpoint separately. An alternate solution would be the ACME server monitor TLS usage by the client's domain, also as an implicit way to confirm proof of possession.
+RFC 8555 states that ACME clients prove the possession of the private keys for their certificate requests [RFC8555]. This document follows this guideline explicitly in the 3-RTT mode for KEM certificates. On the other hand, in the 1-RTT mode, key confirmation is implicit. It is assumed that an encrypted KEM certificate is not useful to anyone but the owner of the KEM private key. Therefore, if the certificate is being used, the client holds the private key as expected. Moreover, this document provides a guideline on performing a "delayed" key confirmation, i.e., by separately POSTing to the /key-confirm endpoint. An alternate solution would be for the ACME server to monitor TLS usage by the client's domain, also as an implicit way to confirm proof of possession.
 
-5.1 Integration with other ecosystems
+## 5.1 Integration with other ecosystems
 
-The 3-RTT mode provides explicit key confirmation which complies to RFC 8555, and it is also easier to integrate with other ecosystems such as Certificate Transparency [RFC9162]. However, the 1-RTT mode imposes challenges, such as how to publish the certificate without (prior) key confirmation. One solution would be a delayed log, in which the CA awaits key confirmation or perform a TLS handshake with the client's domain. If full integration is required, it would be easier to manage if the 3-RTT mode is enforced by default.
+The 3-RTT mode provides explicit key confirmation, which complies with RFC 8555, and it is also easier to integrate with other ecosystems, such as Certificate Transparency [RFC9162]. However, the 1-RTT mode imposes challenges, such as publishing the certificate without (prior) key confirmation. One solution would be a delayed log, in which the CA awaits key confirmation or perform a TLS handshake with the client's domain. If full integration is required, it would be easier to manage if the 3-RTT mode is enforced by default.
 
-5.2 Revocation considerations
+## 5.2 Revocation Considerations
 
-Section 7.6 (RFC 8555 [RFC8555]) gives the opportunity for clients to sign a revocation request using the  private key of the certificate under revocation or by using account keys. For KEM certificates, revocation SHOULD be performed using the account keys. An alternative solution could be implemented as follows:
+Section 7.6 (RFC 8555 [RFC8555]) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. For KEM certificates, revocation SHOULD be performed using the account keys. An alternative solution could be implemented as follows:
 
 - The client performs a POST to /revoke-cert endpoint as specified in RFC 8555, but including the KEM public key under revocation as the "jwk" field and the KEM certificate as the "certificate" field. The "signature" SHOULD be random (dummy) data. 
-- ACME servers can distinguish such a request from the original ones since they can identify the KEM public key from the "alg" in the header as well as in the certificate. The ACME server generates and responds with "key-confirm-data" and "key-confirm-url", similarly to Section 3.1.
-- The ACME client complete the revocation process by POSTing to key-confirm-url, in the same way as described in Section 3.1. The main distinction is that the "signature" SHOULD contain random (dummy) data. Such an URL should be specially created to the revocation purpose so that the signature is not verified by the server, only if the shared secret matches the earlier encapsulation process. 
+- ACME servers can distinguish such a request from the original ones since they can identify the KEM public key from the "alg" in the header and in the certificate. The ACME server generates and responds with "key-confirm-data" and "key-confirm-url", similar to Section 3.1.
+- The ACME client completes the revocation process by POSTing to key-confirm-url in the same way as described in Section 3.1. The main distinction is that the "signature" SHOULD contain random (dummy) data. Such a URL should be specially created for revocation purposes so that the server does not verify the signature only if the shared secret matches the earlier encapsulation process. 
 
-5.3 "Grease" CSR
+## 5.3 "Grease" CSR
 
-When issuing KEM certificates, this document proposed not verifying the CSR for compatibility purposes. It is inspired in GREASE mode [I-D.ietf-tls-esni], Encrypted ClientHello feature can damage middlebox implementations. In ACME, servers might try to instantiate standard CSR objects from the POST request data. Random (dummy) data as a signature object in CSRs would avoid breaking implementations. However, ACME servers MUST allow grease CSRs only if the subject's public key algorithm is a KEM.
+When issuing KEM certificates, this document proposed not verifying the CSR for compatibility purposes. It is inspired in GREASE mode [I-D.ietf-tls-esni], the Encrypted ClientHello feature can damage middlebox implementations. In ACME, servers might try to instantiate standard CSR objects from the POST request data. Random (dummy) data as a signature object in CSRs would avoid breaking implementations. However, ACME servers MUST allow grease CSRs only if the subject's public key algorithm is a KEM.
 
 # IANA Considerations
 
@@ -320,6 +325,9 @@ This document has no IANA actions.
 
 # Contributors
 {:numbered="false"}
+
+Lucas Pandolfo Perin
+Technology Innovation Institute, United Arab Emirates
 
 Victor do Valle Cunha 
 Federal University of Santa Catarina, Brazil
