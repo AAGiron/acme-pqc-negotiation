@@ -111,7 +111,7 @@ In order to allow ACME client implementations to select their preferred certific
 Figure 1: Obtaining algorithm support information
 ```
 
-Depending on the server's support, the server might implement one or several classical, PQC, and hybrid PQC algorithms for certificates. In this context, hybrid algorithms are often called "composite" {{!I-D.ounsworth-pq-composite-sigs}}, in which cryptographic objects are concatenated in a single structure. If the algorithm supported by the server is a signature algorithm, the server replies with the corresponding OID; this is the same as if hybrids are allowed (assuming the composite model and corresponding OIDs {{!I-D.ounsworth-pq-composite-keys}}{{!I-D.ounsworth-pq-composite-sigs]}}. Nevertheless, by means of this new algorithm negotiation endpoint, clients can verify in advance if the server supports the desired algorithms.
+Depending on the server's support, the server might implement one or several classical, PQC, and hybrid PQC algorithms for certificates. In this context, hybrid algorithms are often called "composite" {{!I-D.ounsworth-pq-composite-sigs}}, in which cryptographic objects are concatenated in a single structure. If the algorithm supported by the server is a signature algorithm, the server replies with the corresponding OID; this is the same as if hybrids are allowed (assuming the composite model and corresponding OIDs {{!I-D.ounsworth-pq-composite-keys}}{{!I-D.ounsworth-pq-composite-sigs}}. Nevertheless, by means of this new algorithm negotiation endpoint, clients can verify in advance if the server supports the desired algorithms.
 
 ## Algorithm List Definition
 
