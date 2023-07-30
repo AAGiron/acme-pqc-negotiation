@@ -4,20 +4,13 @@
 
 title: "ACME PQC Algorithm Negotiation"
 abbrev: "acme-algoneg"
-category: info
-
 docname: draft-giron-acme-pqcnegotiation-latest
-
+category: info
 submissiontype: independent
-
 number:
-
 date:
-
 v: 0
-
 area: None
-
 workgroup: None
 
 keyword:
