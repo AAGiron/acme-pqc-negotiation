@@ -36,7 +36,7 @@ author:
     organization: Federal University of Technology - Parana (UTFPR), Brazil
     email: alexandregiron@utfpr.edu.br
 
-normative:    
+normative:
 
 informative:
     KEMTLS: DOI.10.1145/3372297.3423350
@@ -58,7 +58,7 @@ The Automated Certificate Management Environment (ACME) is defined in RFC 8555 {
 
 Basically, ACME requires three steps for the clients when issuing a certificate. First, a client creates an anonymous account to the desired ACME server. Note, however, that it is assumed that the client already trust in the ACME server's certificate, otherwise the client can not connect to the server securely. A secure channel between ACME peers is a requirement fulfilled often by a TLS connection, thus the client must trust in the certificate chain provided by the ACME server. Secondly, after creating an account, the ACME server must prove the ownership of an identifier (i.e., domain name) by means of an ACME challenge. Currently, HTTP-01, DNS-01 and TLS-ALPN-01 are standardized by IETF (others are being proposed, e.g., {{?I-D.ietf-acme-authority-token}}. Lastly, after proving the control of the identifier, the client request a certificate by sending a Certificate-Signing Request (CSR) to the ACME server. The server validates the request and the CSR. If everything went ok, the client can download the requested certificate(s). Note the sequential process: account creation, challenge validation, and then requesting/issuing the certificate.
 
-In order to request and issue a certificate, ACME specification obligates implementations to support elliptical curve algorithm "ES256" {{!RFC7518}} and state that they should support  the "Ed25519" algorithm {{!RFC8037}}. Since the messages in ACME follows the JSON Web Signature standard {{!RFC7515}}, the algorithm support details are specified outside ACME. Therefore, if an ACME server does not support the algorithm or a particular parameter that the client has requested, the server throws "badPublicKey", "badCSR" or "badSignatureAlgorithm" (RFC 8555, Section 6.7)..
+In order to request and issue a certificate, ACME specification obligates implementations to support elliptical curve algorithm "ES256" {{!RFC7518}} and state that they should support  the "Ed25519" algorithm {{!RFC8037}}. Since the messages in ACME follows the JSON Web Signature standard {{!RFC7515}}, the algorithm support details are specified outside ACME. Therefore, if an ACME server does not support the algorithm or a particular parameter that the client has requested, the server throws "badPublicKey", "badCSR" or "badSignatureAlgorithm" (RFC 8555, Section 6.7).
 
 The main problem caused by the absence of an algorithm negotiation procedure in ACME is that clients does not know in advance if the server has support to a particular algorithm for the certificate. Therefore, the client must create an account, perform the validation, send a CSR and then receive an error ("badPublicKey"). This "trial-and-error" process  spends client and server resources inefficiently. Having an algorithm negotiation process, the client could check several ACME servers until the client finds the support it needs, without wasting time creating an account and validating the domain for each one of the servers.
 
