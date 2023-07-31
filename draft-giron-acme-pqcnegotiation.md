@@ -185,8 +185,8 @@ Figure 2: 3-RTT KEMTLS Certificate Issuance Process
         |----------------------------->|
         |                              |
         |        Z,ct <- KEM.Encaps(pk)|
-        |        enc_cert <-enc(Z,cert)|                          
-        | ct,enc_cert                  |                           
+        |        enc_cert <-enc(Z,cert)|
+        | ct,enc_cert                  |
         |<-----------------------------|
         |                              |
         |Z <- KEM.Decaps(ct,sk)        |
