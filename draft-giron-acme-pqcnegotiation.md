@@ -85,25 +85,26 @@ Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), 
 
 In order to allow ACME client implementations to select their preferred certificate algorithms, this document specifies servers to implement a new endpoint named /cert-algorithms. The new endpoint can be reached after a GET /dir (see Figure 1 below). The client does not need to create an account with the server, thus saving resources. As PQC standardization evolves, this document does not specify one default configuration or algorithm. ACME implementations can select their preferred (or default) configurations, but they should also allow users to choose at least in the first certificate issuance (renewals can be automated with the same configuration).
 
+<figure><artwork>
  +------+                       +------+
  | ACME |                       | ACME |
  |Client|                       |Server|
  +--+---+                       +--+---+
     |    GET /dir                  |
     |----------------------------->|
-    +------------------------------+
+    |<-----------------------------|
     |                   HTTP 200   |
     |                              |
     |    GET /new-nonce            |
     |----------------------------->|
-    |<-----------------------------+
+    |<-----------------------------|
     |                   HTTP 200   |
     |                              |
     |    GET /cert-algorithms      |
     |----------------------------->|
-    |<-----------------------------+
+    |<-----------------------------|
     |                   HTTP 200   |
-
+</artwork></figure>
 
 Figure 1: Obtaining algorithm support information
 
@@ -113,6 +114,7 @@ Depending on the server's support, the server might implement one or several cla
 
 Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with a JSON-formatted list of supported algorithms, as follows:
 
+<figure><artwork>
 {
      "PQTLS": {
        "Dilithium2": "1.3.6.1.4.1.2.267.7.4.4",
@@ -121,8 +123,8 @@ Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with
         ...
      },
      "KEMTLS": {
-       "Kyber-512-with-Dilithium2-sha256": "Kyber-512-with-Dilithium2-sha256",
-       "P256-Kyber-512-with-P256-Dilithium2-sha256": "P256-Kyber-512-with-P256-Dilithium2-sha256"
+       "Kyber-512-with-Dilithium2-sha256": "TBD",
+       "P256-Kyber-512-with-P256-Dilithium2-sha256": "TBD"
        ...
      },
      "KEM-POP" : {
@@ -130,6 +132,7 @@ Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with
        "FrodoKEM" : "Reserved-TBD",
      }
 }
+</artwork></figure>
 
 Servers MUST provide such a list with at least one algorithm. Note the distinction between Signatures, KEMTLS, and KEM-POP, as an alternative to telling the clients a different naming to support (possibly) different issuance processes. Moreover, the OIDs presented on this list are from the OQS project {{?OQS}}, but they are subject to change whenever the Internet drafts evolve (such as {{!I-D.ounsworth-pq-composite-keys}}).
 
@@ -137,33 +140,64 @@ Servers MUST provide such a list with at least one algorithm. Note the distincti
 
 ACME Certificate issuance process does not require modifications when issuing PQC signature certificates. However, this document proposes the following changes to the ACME protocol for KEM certificates. Assuming that the ACME client has already performed account registration and challenge, Figures 2 and 3 show two ways to issue a KEM certificate. Figure 2 requires 3 RTTs, while Figure 3 optimizes performance to 1 RTT. The main difference is that the optimized mode does not guarantee key confirmation. The 1-RTT mode is similar to the "Indirect Method" of PoP defined in RFC 4210 {{!RFC4210}}. ACME servers SHOULD enforce the 3-RTT mode if they require a confirmation that the client actually possesses the certificate's private key. If performance is desired, the 1-RTT mode is suitable since it reduces the number of signed requests and polling time.
 
-     +------+                       +------+                    +------+                       +------+
-     | ACME |                       | ACME |                    | ACME |                       | ACME |
-     |Client|                       |Server|                    |Client|                       |Server|
-     +--+---+                       +--+---+                    +--+---+                       +--+---+
-        |                              |                           |                              |
-        |pk,sk <- KEM.Keygen()         |                           |pk,sk <- KEM.Keygen()         |
-        |                              |                           |                              |
-        | POST /finalize [pk,mode]     |                           | POST /finalize [pk,mode]     |
-        |----------------------------->|                           |----------------------------->|
-        |                              |                           |                              |
-        |        Z,ct <- KEM.Encaps(pk)|                           |        Z,ct <- KEM.Encaps(pk)|
-        |  ct                          |                           |        enc_cert <-enc(Z,cert)|
-        |<-----------------------------+                           | ct,enc_cert                  |
-        |                              |                           |<-----------------------------+
-        |Z <- KEM.Decaps(ct,sk)        |                           |                              |
-        |                              |                           |Z <- KEM.Decaps(ct,sk)        |
-        | POST /key-confirm [Z]        |                           |cert <- dec(Z,enc_cert)       |
-        |----------------------------->|                           |                              |
-        |<-----------------------------+
+<figure><artwork>
+     +------+                       +------+
+     | ACME |                       | ACME |
+     |Client|                       |Server|
+     +--+---+                       +--+---+
+        |                              |
+        |pk,sk <- KEM.Keygen()         |
+        |                              |
+        | POST /finalize [pk,mode]     |
+        |----------------------------->|
+        |                              |
+        |        Z,ct <- KEM.Encaps(pk)|
+        |  ct                          |
+        |<-----------------------------|
+        |                              |
+        |Z <- KEM.Decaps(ct,sk)        |
+        |                              |
+        | POST /key-confirm [Z]        |
+        |----------------------------->|
+        |<-----------------------------|
         |                   HTTP 200   |
         |                     or 401   |
-        | POST /certZ                  |                   [ ] Message signed by the client's account
-        |----------------------------->|                       key
-        |<-----------------------------+
+        | POST /certZ                  |
+        |----------------------------->|
+        |<-----------------------------|
         |           application-pem    |
 
-Figure 2: 3-RTT KEMTLS Certificate Issuance Process        Figure 3: 1-RTT KEMTLS Certificate Issuance Process
+       [ ] Message signed by the client's
+           account key
+</artwork></figure>
+
+Figure 2: 3-RTT KEMTLS Certificate Issuance Process
+
+<figure><artwork>
+     +------+                       +------+
+     | ACME |                       | ACME |
+     |Client|                       |Server|
+     +--+---+                       +--+---+
+        |                              |
+        |pk,sk <- KEM.Keygen()         |
+        |                              |
+        | POST /finalize [pk,mode]     |
+        |----------------------------->|
+        |                              |
+        |        Z,ct <- KEM.Encaps(pk)|
+        |        enc_cert <-enc(Z,cert)|                          
+        | ct,enc_cert                  |                           
+        |<-----------------------------|
+        |                              |
+        |Z <- KEM.Decaps(ct,sk)        |
+        |cert <- dec(Z,enc_cert)       |
+        |                              |
+
+       [ ] Message signed by the client's
+           account key
+</artwork></figure>
+
+Figure 3: 1-RTT KEMTLS Certificate Issuance Process
 
 Figure 2 shows the 3-RTT mode. The client can not use a CSR for a KEMTLS certificate, so it generates a key pair and send a "modified CSR", where the public key is a KEM public key, and the signature is random (dummy) data. The server then identifies and extracts the mode and the KEM public key from the modified CSR. Having implemented the KEM algorithm, the server encapsulates under the client's public key sending back the ciphertext to the client. The client performs a decapsulation and confirms the shared secret using the /key-confirm endpoint. ACME servers willing to issue KEMTLS certificates MUST implement this endpoint.
 
@@ -176,20 +210,23 @@ Note, however, that key confirmation can be addressed differently in the 1-RTT m
 
 Considering the first POST to /finalize (Figure 2), which would be similar to a standard POST {{!RFC8555}}, an example of a reply would be as follows. This example considers a CSR built with a KEM public key (Kyber-512) and dummy data in the CSR's signature.
 
+<figure><artwork>
 HTTP/1.1 200 OK
 Content-Type: application/json
 Replay-Nonce: CGf81JWBsq8QyIgPCi9Q9X
 Link: <https://example.com/acme/directory>;rel="index"
 {
   "key-confirm-data": {
-    "ct": "9HwLdArXTDC/otcTWNWYcOgRxWOeUahZj3Ri7SrKlCo4syv...Cl79urEXkhoUhWcqWzb2",
+    "ct": "9HwLdArXTDC/otcTWNWYcOgRxWOeUahZj3Ri7...Cl79urEXkhoUhWcqWzb2",
     "ct-alg": "Kyber-512"
   },
   "key-confirm-url": "https://example.com/key-confirm/Rg5dV14Gh1Q"
 }
+</artwork></figure>
 
 Note that this reply contains the 'key-confirm-data' and 'key-confirm-url' so ACME clients can proceed accordingly. After decapsulating the shared secret from "ct", the client can POST to the key confirm URL.
 
+<figure><artwork>
 POST /key-confirm/Rg5dV14Gh1Q HTTP/1.1
 Host: example.com
 Content-Type: application/jose+json
@@ -206,6 +243,7 @@ Content-Type: application/jose+json
      }),
      "signature": "9cbg5JO1Gf5YLjjz...SpkUfcdPai9uVYYQ"
 }
+</artwork></figure>
 
 The POST is signed with Dilithium2 in this example. Note that the client is sending "Z" back in a secure channel (i.e., an underlying TLS connection between the ACME peers), so Z is not being disclosed to a passive attacker. The shared secret Z is used to prove the private key's possession. The ACME server compares the received Z with the order's information and starts issuing the certificate. If Z mismatches the server's storage, an HTTP error 401 is sent. If Z matches, there are no further modifications in the protocol, so the client and server proceed as RFC 8555 {{!RFC8555}} dictates, i.e., clients start polling until their certificates are ready to be downloaded.
 
@@ -215,8 +253,10 @@ When using the 1-RTT mode for KEM certificate issuance, ACME peers MUST implemen
 
 Following the notation provided in RFC 5869, for the 1-RTT mode, ACME peers SHOULD implement the following "two-step" Key-Derivation Method:
 
+<figure><artwork>
    PRK <- HKDF-Extract(salt, Z)
    OKM <- HKDF-Expand(PRK, info, L)
+</artwork></figure>
 
 where Z is the KEM output (shared secret), salt is an optional and non-secret random value, PRK is the intermediary pseudorandom key, info is optional context information, L is the length of OKM, and OKM is the output keying material. The length of OKM (in octets) depends on the ciphersuite. This document recommends filling the 'salt' octets with the Key Authorization String (KAS)  and the 'info' field as the hash of the POST /finalize message. Note that the OKM can comprise the key (using OKM's left-most bytes) and Initialization Vectors (IVs), if required, in the OKM's right-most bytes.
 
