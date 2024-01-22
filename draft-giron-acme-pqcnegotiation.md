@@ -267,6 +267,47 @@ Section 5.1 in RFC 7518 {{!RFC7518}} defines a set of symmetric algorithms for e
 When receiving an encrypting certificate, it concludes the 1-RTT mode. Therefore, there is no need for the ACME peers to exchange further JWS messages. On the other hand, depending on CA policies, ACME servers could allow a POST in /key-confirm endpoint in a later moment, if a delayed key confirmation is desired. Such a policy could be use to limit the usage of the 1-RTT mode, if desired, for example enforcing 3-RTT mode if a previous 1-RTT was not later "key confirmed" or checked by a TLS handshake (between the ACME server and the ACME client's domain that was  certified).
 
 
+
+# KEM-Certificate Revocation Procedure
+
+Figure 4 illustrates the revocation procedure for a KEM certificate. The endpoint ("/revokeCert") is the same to revoke all types of certificates. Therefore, old clients remain compatible to this proposal. 
+
+Servers process revocation requests similarly. If the certificate inside of the revocation request is a KEM, then the server sends a challenge ciphertext to the client. The client then proves ownership of the private key by decapsulating and POSTing to the /kem-confirm endpoint, allowing revocation. 
+
+<figure><artwork>
++------+                       +------+
+| ACME |                       | ACME |
+|Client|                       |Server|
++--+---+                       +--+---+
+   | [Revocation Request]         |
+   | Signature                    |
+   |----------------------------->|
+   |                              |
+   |        Z,ct <- KEM.Encaps(pk)|
+   | ct                           |
+   |<-----------------------------|
+   |                              |
+   |Z <- KEM.Decaps(ct,sk)        |
+   |                              |
+   |         POST /key-confirm [Z]|
+   |----------------------------->|
+   |<-----------------------------|
+   |                   Result     |
+
+    Figure 4: KEM-Revoke Procedure
+</artwork></figure>
+
+
+This revocation procedure still uses signatures from the account keys (for the requests), but modifies ACME to support revoking KEM certificates. Servers COULD support the following optimization to this procedure:
+
+1. Clients and Servers store Z from the Issuance Process (Section 3). 
+
+2. A client could reuse Z from the Issuance process to revoke the certificate (appending Z as an optional JSON field in the Revocation Request). This way the revocation is done in 1-RTT, saves computational time (one encapsulation and one decapsulation) but requires state: clients and servers need to store key confirmations (Z).
+
+3. Servers match the stored Z with the one appended in the revocation request. If it matches, servers reply the result.
+
+
+
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
@@ -279,7 +320,7 @@ KEM Certificate: a X.509 certificate where the subject's public key is from a Ke
 
 # Security Considerations
 
-RFC 8555 {{!RFC8555}} states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, which should be open for clients to query. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future.
+RFC 8555 {{!RFC8555}} states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, accessible from the server's directory, allowing clients to query algorithm support in advance. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future.
 
 RFC 8555 states that ACME clients prove the possession of the private keys for their certificate requests {{!RFC8555}}. This document follows this guideline explicitly in the 3-RTT mode for KEM certificates. On the other hand, in the 1-RTT mode, key confirmation is implicit. It is assumed that an encrypted KEM certificate is not useful to anyone but the owner of the KEM private key. Therefore, if the certificate is being used, the client holds the private key as expected. Moreover, this document provides a guideline on performing a "delayed" key confirmation, i.e., by separately POSTing to the /key-confirm endpoint. An alternate solution would be for the ACME server to monitor TLS usage by the client's domain, also as an implicit way to confirm proof of possession.
 
@@ -289,17 +330,8 @@ The 3-RTT mode provides explicit key confirmation, which complies with RFC 8555,
 
 ## Revocation Considerations
 
-Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. For KEM certificates, revocation SHOULD be performed using the account keys. An alternative solution could be implemented as follows:
+Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. The revocation procedure described in this document REQUIRES account keys to sign requests and Proof-of-Possession for the KEM certificate. 
 
-- The client performs a POST to /revoke-cert endpoint as specified in RFC 8555, but including the KEM public key under revocation as the "jwk" field and the KEM certificate as the "certificate" field. The "signature" SHOULD be random (dummy) data.
-
-- ACME servers can distinguish such a request from the original ones since they can identify the KEM public key from the "alg" in the header and in the certificate. The ACME server generates and responds with "key-confirm-data" and "key-confirm-url", similar to Section 3.1.
-
-- The ACME client completes the revocation process by POSTing to key-confirm-url in the same way as described in Section 3.1. The main distinction is that the "signature" SHOULD contain random (dummy) data. Such a URL should be specially created for revocation purposes so that the server does not verify the signature only if the shared secret matches the earlier encapsulation process.
-
-## "Grease" CSR
-
-When issuing KEM certificates, this document proposed not verifying the CSR for compatibility purposes. It is inspired in GREASE mode {{?I-D.ietf-tls-esni}}, the Encrypted ClientHello feature can damage middlebox implementations. In ACME, servers might try to instantiate standard CSR objects from the POST request data. Random (dummy) data as a signature object in CSRs would avoid breaking implementations. However, ACME servers MUST allow grease CSRs only if the subject's public key algorithm is a KEM.
 
 # IANA Considerations
 
