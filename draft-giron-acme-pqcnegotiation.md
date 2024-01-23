@@ -318,6 +318,16 @@ KEM Certificate: a X.509 certificate where the subject's public key is from a Ke
 
 1-RTT Mode: a modification in ACME to allow issuance of KEM certificates without key confirmation, delayed or implicit key confirmation.
 
+
+# Additions to the ACME directory
+
+As in RFC 8555, Section 7.1.1, the directory object contains the required URLs to configure ACME clients. This document adds the following fields to the directory:
+
+- Field: "key-confirm"; URL in Value: Key confirmation.
+
+- Field: "cert-algorithms"; URL in Value: Certificate Algorithms List. 
+
+
 # Security Considerations
 
 RFC 8555 {{!RFC8555}} states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, accessible from the server's directory, allowing clients to query algorithm support in advance. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future.
