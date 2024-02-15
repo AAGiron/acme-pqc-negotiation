@@ -73,13 +73,13 @@ This document describes an algorithm negotiation procedure for ACME. The process
 
 With flexibility in mind, by using the process described in this document, ACME servers allow the following options for their clients:
 
-- OPTION 1 (PQTLS): Client account keys and certificate keys are from signature scheme(s). Certificates are signed, i.e., Issuer CA uses digital signature keys). The issuance process is the same as specified in RFC 8555 {{!RFC8555}}.
+- Select a signature algorithm for the ACME's account key. They are specified in the "signature_algorithms_account" list (see section "Algorithm List Definition").
 
-- OPTION 2 (KEMTLS): Client account keys use a signature scheme; Certificate keys are from a KEM. Certificates are signed by the Issuer CA key. The issuance process is modified as specified in this document.
+- Select a signature algorithm for the signature in the certificate to be issued. They are specified in the "signature_algorithms_cert" list. The naming is inspired in RFC 8446.
 
-- OPTION 3 (KEM-POP): Client account keys use a signature scheme; Certificate keys are from a KEM. Certificates are signed by the Issuer CA key. The issuance process is the same as specified in RFC 8555 {{!RFC8555}} (not covered in this document, please refer to {{?VerifiableGeneration}} for a discussion).
+- Select a KEM or a signature algorithm for the Subject's public key in the certificate to be issued. They are specified in the "certificate_pubkey" list. 
 
-Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs. On the other hand, the negotiation described here is simplified  for signature-based certificates (PQTLS option), where only one digital signature scheme is requested by the client.
+Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs. 
 
 ## Cert-algorithms endpoint
 
@@ -116,25 +116,105 @@ Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with
 
 <figure><artwork>
 {
-     "PQTLS": {
-       "Dilithium2": "1.3.6.1.4.1.2.267.7.4.4",
-       "P256_Dilithium2": "1.3.9999.2.7.1",
-       "Dilithium3" : "1.3.6.1.4.1.2.267.7.6.5",
-        ...
+     "signature_algorithms_account": {
+       "default"		                 : "OID_TBD",
+       "ML-DSA-44-RSA2048-PSS-SHA256"            : "060B6086480186FA6B50080101",
+       "ML-DSA-44-RSA2048-PKCS15-SHA256"         : "060B6086480186FA6B50080102",
+       "ML-DSA-44-Ed25519-SHA512"                : "060B6086480186FA6B50080103",
+       "ML-DSA-44-ECDSA-P256-SHA256"             : "060B6086480186FA6B50080104",
+       "ML-DSA-44-ECDSA-brainpoolP256r1-SHA256"  : "060B6086480186FA6B50080105",
+       "ML-DSA-65-RSA3072-PSS-SHA512"            : "060B6086480186FA6B50080106",
+       "ML-DSA-65-RSA3072-PKCS15-SHA512"         : "060B6086480186FA6B50080107",
+       "ML-DSA-65-ECDSA-P256-SHA512"             : "060B6086480186FA6B50080108",
+       "ML-DSA-65-ECDSA-brainpoolP256r1-SHA512"  : "060B6086480186FA6B50080109",
+       "ML-DSA-65-Ed25519-SHA512"                : "060B6086480186FA6B5008010A",
+       "ML-DSA-87-ECDSA-P384-SHA512"             : "060B6086480186FA6B5008010B",
+       "ML-DSA-87-ECDSA-brainpoolP384r1-SHA512"  : "060B6086480186FA6B5008010C",
+       "ML-DSA-87-Ed448-SHA512"                  : "060B6086480186FA6B5008010D",
+       "Falcon-512-ECDSA-P256-SHA256"            : "060B6086480186FA6B5008010E",
+       "Falcon-512-ECDSA-brainpoolP256r1-SHA256" : "060B6086480186FA6B5008010F",
+       "Falcon-512-Ed25519-SHA512"               : "060B6086480186FA6B50080110",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "OthersTBD"              : "OID_TBD"
      },
-     "KEMTLS": {
-       "Kyber-512-with-Dilithium2-sha256": "TBD",
-       "P256-Kyber-512-with-P256-Dilithium2-sha256": "TBD"
-       ...
+     "signature_algorithms_cert": {
+       "default"		: "OID_TBD",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "OthersTBD"		: "OID_TBD"
      },
-     "KEM-POP" : {
-       "Kyber": "Reserved-TBD",
-       "FrodoKEM" : "Reserved-TBD",
+     "certificate_pubkey": {
+       "default"		: "OID_TBD",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "ML-KEM-512-ECDH-P256-KMAC128"             : "DER_OID_TBD",
+       "ML-KEM-512-ECDH-brainpoolP256r1-KMAC128"  : "DER_OID_TBD",
+       "ML-KEM-512-X25519-KMAC128"                : "DER_OID_TBD",
+       "ML-KEM-512-RSA2048-KMAC128"               : "DER_OID_TBD",
+       "ML-KEM-512-RSA3072-KMAC128"               : "DER_OID_TBD",
+       "ML-KEM-768-ECDH-P256-KMAC256"             : "DER_OID_TBD",
+       "ML-KEM-768-ECDH-brainpoolP256r1-KMAC256"  : "DER_OID_TBD",
+       "ML-KEM-768-X25519-KMAC256"                : "DER_OID_TBD",
+       "ML-KEM-1024-ECDH-P384-KMAC256"            : "DER_OID_TBD",
+       "ML-KEM-1024-ECDH-brainpoolP384r1-KMAC256" : "DER_OID_TBD",
+       "ML-KEM-1024-X448-KMAC256"                 : "DER_OID_TBD",
+       "ML-KEM-512-ipd"         : "1.3.6.1.4.1.22554.5.6.1",
+       "ML-KEM-768-ipd"         : "1.3.6.1.4.1.22554.5.6.2",
+       "ML-KEM-1024-ipd"        : "1.3.6.1.4.1.22554.5.6.3",
+       "OthersTBD"              : "OID_TBD"
      }
 }
 </artwork></figure>
 
-Servers MUST provide such a list with at least one algorithm. Note the distinction between Signatures, KEMTLS, and KEM-POP, as an alternative to telling the clients a different naming to support (possibly) different issuance processes. Moreover, the OIDs presented on this list are from the OQS project {{?OQS}}, but they are subject to change whenever the Internet drafts evolve (such as {{!I-D.ounsworth-pq-composite-keys}}).
+Servers MUST provide such a list with at least one algorithm (default). The structure of the list allows the client to choose different algorithms for composing the certificate. Moreover, the OIDs presented on this list are subject to change until the final version of this document is released. Other algorithms can be added (replacing "OthersTDB" in the list), for example including non-PQC algorithms such as "RS256" (RFC 7518). Lastly, hybrid modes are specified here based on the IETF I-Ds (such as {{!I-D.ounsworth-pq-composite-sigs}}). Their OID is represented by a DER-encoded OID concatenation (following {{!I-D.ounsworth-pq-composite-sigs}}, Table 1). Hybrids are RECOMMENDED to be in the default choice for algorithm selection.
+
+Note that this list allows a client to ask for a KEMTLS certificate by selecting "ML-KEM-*" using the "certificate_pubkey" sublist. 
 
 # KEM Certificate Issuance Modes
 
@@ -267,6 +347,47 @@ Section 5.1 in RFC 7518 {{!RFC7518}} defines a set of symmetric algorithms for e
 When receiving an encrypting certificate, it concludes the 1-RTT mode. Therefore, there is no need for the ACME peers to exchange further JWS messages. On the other hand, depending on CA policies, ACME servers could allow a POST in /key-confirm endpoint in a later moment, if a delayed key confirmation is desired. Such a policy could be use to limit the usage of the 1-RTT mode, if desired, for example enforcing 3-RTT mode if a previous 1-RTT was not later "key confirmed" or checked by a TLS handshake (between the ACME server and the ACME client's domain that was  certified).
 
 
+
+# KEM-Certificate Revocation Procedure
+
+Figure 4 illustrates the revocation procedure for a KEM certificate. The endpoint ("/revokeCert") is the same to revoke all types of certificates. Therefore, old clients remain compatible to this proposal. 
+
+Servers process revocation requests similarly. If the certificate inside of the revocation request is a KEM, then the server sends a challenge ciphertext to the client. The client then proves ownership of the private key by decapsulating and POSTing to the /kem-confirm endpoint, allowing revocation. 
+
+<figure><artwork>
++------+                       +------+
+| ACME |                       | ACME |
+|Client|                       |Server|
++--+---+                       +--+---+
+   | [Revocation Request]         |
+   | Signature                    |
+   |----------------------------->|
+   |                              |
+   |        Z,ct <- KEM.Encaps(pk)|
+   | ct                           |
+   |<-----------------------------|
+   |                              |
+   |Z <- KEM.Decaps(ct,sk)        |
+   |                              |
+   |         POST /key-confirm [Z]|
+   |----------------------------->|
+   |<-----------------------------|
+   |                   Result     |
+
+    Figure 4: KEM-Revoke Procedure
+</artwork></figure>
+
+
+This revocation procedure still uses signatures from the account keys (for the requests), but modifies ACME to support revoking KEM certificates. Servers COULD support the following optimization to this procedure:
+
+1. Clients and Servers store Z from the Issuance Process (Section 3). 
+
+2. A client could reuse Z from the Issuance process to revoke the certificate (appending Z as an optional JSON field in the Revocation Request). This way the revocation is done in 1-RTT, saves computational time (one encapsulation and one decapsulation) but requires state: clients and servers need to store key confirmations (Z).
+
+3. Servers match the stored Z with the one appended in the revocation request. If it matches, servers reply the result.
+
+
+
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
@@ -277,9 +398,19 @@ KEM Certificate: a X.509 certificate where the subject's public key is from a Ke
 
 1-RTT Mode: a modification in ACME to allow issuance of KEM certificates without key confirmation, delayed or implicit key confirmation.
 
+
+# Additions to the ACME directory
+
+As in RFC 8555, Section 7.1.1, the directory object contains the required URLs to configure ACME clients. This document adds the following fields to the directory:
+
+- Field: "key-confirm"; URL in Value: Key confirmation.
+
+- Field: "cert-algorithms"; URL in Value: Certificate Algorithms List. 
+
+
 # Security Considerations
 
-RFC 8555 {{!RFC8555}} states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, which should be open for clients to query. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future.
+RFC 8555 {{!RFC8555}} states that ACME relies on a secure channel, often provided by TLS. In this regard, this document does not impose any changes. The first modification is the /cert-algorithms endpoint, accessible from the server's directory, allowing clients to query algorithm support in advance. ACME servers could control the number of queries to this endpoint by controlling the nonces to avoid Denial-of-Service (DoS). The second modification is a feature; ACME servers can now support KEM certificates in an automated way. In both modifications, one question is about the security of the supported algorithms (i.e., select which algorithms to support). The recommendations in this document are built upon the announced standards by NIST. Given the ongoing PQC standardization, new algorithms and attacks on established schemes can appear, meaning that the recommendation for algorithm support can change in the future.
 
 RFC 8555 states that ACME clients prove the possession of the private keys for their certificate requests {{!RFC8555}}. This document follows this guideline explicitly in the 3-RTT mode for KEM certificates. On the other hand, in the 1-RTT mode, key confirmation is implicit. It is assumed that an encrypted KEM certificate is not useful to anyone but the owner of the KEM private key. Therefore, if the certificate is being used, the client holds the private key as expected. Moreover, this document provides a guideline on performing a "delayed" key confirmation, i.e., by separately POSTing to the /key-confirm endpoint. An alternate solution would be for the ACME server to monitor TLS usage by the client's domain, also as an implicit way to confirm proof of possession.
 
@@ -289,17 +420,8 @@ The 3-RTT mode provides explicit key confirmation, which complies with RFC 8555,
 
 ## Revocation Considerations
 
-Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. For KEM certificates, revocation SHOULD be performed using the account keys. An alternative solution could be implemented as follows:
+Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. The revocation procedure described in this document REQUIRES account keys to sign requests and Proof-of-Possession for the KEM certificate. 
 
-- The client performs a POST to /revoke-cert endpoint as specified in RFC 8555, but including the KEM public key under revocation as the "jwk" field and the KEM certificate as the "certificate" field. The "signature" SHOULD be random (dummy) data.
-
-- ACME servers can distinguish such a request from the original ones since they can identify the KEM public key from the "alg" in the header and in the certificate. The ACME server generates and responds with "key-confirm-data" and "key-confirm-url", similar to Section 3.1.
-
-- The ACME client completes the revocation process by POSTing to key-confirm-url in the same way as described in Section 3.1. The main distinction is that the "signature" SHOULD contain random (dummy) data. Such a URL should be specially created for revocation purposes so that the server does not verify the signature only if the shared secret matches the earlier encapsulation process.
-
-## "Grease" CSR
-
-When issuing KEM certificates, this document proposed not verifying the CSR for compatibility purposes. It is inspired in GREASE mode {{?I-D.ietf-tls-esni}}, the Encrypted ClientHello feature can damage middlebox implementations. In ACME, servers might try to instantiate standard CSR objects from the POST request data. Random (dummy) data as a signature object in CSRs would avoid breaking implementations. However, ACME servers MUST allow grease CSRs only if the subject's public key algorithm is a KEM.
 
 # IANA Considerations
 
