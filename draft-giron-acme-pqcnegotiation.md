@@ -73,13 +73,13 @@ This document describes an algorithm negotiation procedure for ACME. The process
 
 With flexibility in mind, by using the process described in this document, ACME servers allow the following options for their clients:
 
-- OPTION 1 (PQTLS): Client account keys and certificate keys are from signature scheme(s). Certificates are signed, i.e., Issuer CA uses digital signature keys). The issuance process is the same as specified in RFC 8555 {{!RFC8555}}.
+- Select a signature algorithm for the ACME's account key. They are specified in the "signature_algorithms_account" list (see section "Algorithm List Definition").
 
-- OPTION 2 (KEMTLS): Client account keys use a signature scheme; Certificate keys are from a KEM. Certificates are signed by the Issuer CA key. The issuance process is modified as specified in this document.
+- Select a signature algorithm for the signature in the certificate to be issued. They are specified in the "signature_algorithms_cert" list. The naming is inspired in RFC 8446.
 
-- OPTION 3 (KEM-POP): Client account keys use a signature scheme; Certificate keys are from a KEM. Certificates are signed by the Issuer CA key. The issuance process is the same as specified in RFC 8555 {{!RFC8555}} (not covered in this document, please refer to {{?VerifiableGeneration}} for a discussion).
+- Select a KEM or a signature algorithm for the Subject's public key in the certificate to be issued. They are specified in the "certificate_pubkey" list. 
 
-Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs. On the other hand, the negotiation described here is simplified  for signature-based certificates (PQTLS option), where only one digital signature scheme is requested by the client.
+Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs. 
 
 ## Cert-algorithms endpoint
 
@@ -116,25 +116,105 @@ Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with
 
 <figure><artwork>
 {
-     "PQTLS": {
-       "Dilithium2": "1.3.6.1.4.1.2.267.7.4.4",
-       "P256_Dilithium2": "1.3.9999.2.7.1",
-       "Dilithium3" : "1.3.6.1.4.1.2.267.7.6.5",
-        ...
+     "signature_algorithms_account": {
+       "default"		                 : "OID_TBD",
+       "ML-DSA-44-RSA2048-PSS-SHA256"            : "060B6086480186FA6B50080101",
+       "ML-DSA-44-RSA2048-PKCS15-SHA256"         : "060B6086480186FA6B50080102",
+       "ML-DSA-44-Ed25519-SHA512"                : "060B6086480186FA6B50080103",
+       "ML-DSA-44-ECDSA-P256-SHA256"             : "060B6086480186FA6B50080104",
+       "ML-DSA-44-ECDSA-brainpoolP256r1-SHA256"  : "060B6086480186FA6B50080105",
+       "ML-DSA-65-RSA3072-PSS-SHA512"            : "060B6086480186FA6B50080106",
+       "ML-DSA-65-RSA3072-PKCS15-SHA512"         : "060B6086480186FA6B50080107",
+       "ML-DSA-65-ECDSA-P256-SHA512"             : "060B6086480186FA6B50080108",
+       "ML-DSA-65-ECDSA-brainpoolP256r1-SHA512"  : "060B6086480186FA6B50080109",
+       "ML-DSA-65-Ed25519-SHA512"                : "060B6086480186FA6B5008010A",
+       "ML-DSA-87-ECDSA-P384-SHA512"             : "060B6086480186FA6B5008010B",
+       "ML-DSA-87-ECDSA-brainpoolP384r1-SHA512"  : "060B6086480186FA6B5008010C",
+       "ML-DSA-87-Ed448-SHA512"                  : "060B6086480186FA6B5008010D",
+       "Falcon-512-ECDSA-P256-SHA256"            : "060B6086480186FA6B5008010E",
+       "Falcon-512-ECDSA-brainpoolP256r1-SHA256" : "060B6086480186FA6B5008010F",
+       "Falcon-512-Ed25519-SHA512"               : "060B6086480186FA6B50080110",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "OthersTBD"              : "OID_TBD"
      },
-     "KEMTLS": {
-       "Kyber-512-with-Dilithium2-sha256": "TBD",
-       "P256-Kyber-512-with-P256-Dilithium2-sha256": "TBD"
-       ...
+     "signature_algorithms_cert": {
+       "default"		: "OID_TBD",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "OthersTBD"		: "OID_TBD"
      },
-     "KEM-POP" : {
-       "Kyber": "Reserved-TBD",
-       "FrodoKEM" : "Reserved-TBD",
+     "certificate_pubkey": {
+       "default"		: "OID_TBD",
+       "ML-DSA-44-ipd"          : "1.3.6.1.4.1.2.267.12.4.4",
+       "ML-DSA-65-ipd"          : "1.3.6.1.4.1.2.267.12.6.5",
+       "ML-DSA-87-ipd"          : "1.3.6.1.4.1.2.267.12.8.7",
+       "SLH-DSA-SHA2-128s-ipd"  : "1.3.9999.6.4.16",
+       "SLH-DSA-SHAKE-128s-ipd" : "1.3.9999.6.7.16",
+       "SLH-DSA-SHA2-128f-ipd"  : "1.3.9999.6.4.13",
+       "SLH-DSA-SHAKE-128f-ipd" : "1.3.9999.6.7.13",
+       "SLH-DSA-SHA2-192s-ipd"  : "1.3.9999.6.5.12",
+       "SLH-DSA-SHAKE-192s-ipd" : "1.3.9999.6.8.12",
+       "SLH-DSA-SHA2-192f-ipd"  : "1.3.9999.6.5.10",
+       "SLH-DSA-SHAKE-192f-ipd" : "1.3.9999.6.8.10",
+       "SLH-DSA-SHA2-256s-ipd"  : "1.3.9999.6.6.12",
+       "SLH-DSA-SHAKE-256s-ipd" : "1.3.9999.6.9.12",
+       "SLH-DSA-SHA2-256f-ipd"  : "1.3.9999.6.6.10",
+       "SLH-DSA-SHAKE-256f-ipd" : "1.3.9999.6.9.10",
+       "Falcon-512"             : "1.3.9999.3.6*",
+       "Falcon-1024"            : "1.3.9999.3.9*",
+       "ML-KEM-512-ECDH-P256-KMAC128"             : "DER_OID_TBD",
+       "ML-KEM-512-ECDH-brainpoolP256r1-KMAC128"  : "DER_OID_TBD",
+       "ML-KEM-512-X25519-KMAC128"                : "DER_OID_TBD",
+       "ML-KEM-512-RSA2048-KMAC128"               : "DER_OID_TBD",
+       "ML-KEM-512-RSA3072-KMAC128"               : "DER_OID_TBD",
+       "ML-KEM-768-ECDH-P256-KMAC256"             : "DER_OID_TBD",
+       "ML-KEM-768-ECDH-brainpoolP256r1-KMAC256"  : "DER_OID_TBD",
+       "ML-KEM-768-X25519-KMAC256"                : "DER_OID_TBD",
+       "ML-KEM-1024-ECDH-P384-KMAC256"            : "DER_OID_TBD",
+       "ML-KEM-1024-ECDH-brainpoolP384r1-KMAC256" : "DER_OID_TBD",
+       "ML-KEM-1024-X448-KMAC256"                 : "DER_OID_TBD",
+       "ML-KEM-512-ipd"         : "1.3.6.1.4.1.22554.5.6.1",
+       "ML-KEM-768-ipd"         : "1.3.6.1.4.1.22554.5.6.2",
+       "ML-KEM-1024-ipd"        : "1.3.6.1.4.1.22554.5.6.3",
+       "OthersTBD"              : "OID_TBD"
      }
 }
 </artwork></figure>
 
-Servers MUST provide such a list with at least one algorithm. Note the distinction between Signatures, KEMTLS, and KEM-POP, as an alternative to telling the clients a different naming to support (possibly) different issuance processes. Moreover, the OIDs presented on this list are from the OQS project {{?OQS}}, but they are subject to change whenever the Internet drafts evolve (such as {{!I-D.ounsworth-pq-composite-keys}}).
+Servers MUST provide such a list with at least one algorithm (default). The structure of the list allows the client to choose different algorithms for composing the certificate. Moreover, the OIDs presented on this list are subject to change until the final version of this document is released. Other algorithms can be added (replacing "OthersTDB" in the list), for example including non-PQC algorithms such as "RS256" (RFC 7518). Lastly, hybrid modes are specified here based on the IETF I-Ds (such as {{!I-D.ounsworth-pq-composite-sigs}}). Their OID is represented by a DER-encoded OID concatenation (following {{!I-D.ounsworth-pq-composite-sigs}}, Table 1). Hybrids are RECOMMENDED to be in the default choice for algorithm selection.
+
+Note that this list allows a client to ask for a KEMTLS certificate by selecting "ML-KEM-*" using the "certificate_pubkey" sublist. 
 
 # KEM Certificate Issuance Modes
 
