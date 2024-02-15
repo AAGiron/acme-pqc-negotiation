@@ -35,7 +35,6 @@ informative:
     KEMTLS: DOI.10.1145/3372297.3423350
     KEMTLS-BENCH-IOT: DOI.10.1007/978-3-031-22829-2_6
     VerifiableGeneration: DOI.10.1145/3548606.3560560
-    OQS: DOI.10.1007/978-3-319-69453-5_2
     PQC: DOI.10.1038/nature23461
 
 --- abstract
@@ -77,9 +76,9 @@ With flexibility in mind, by using the process described in this document, ACME 
 
 - Select a signature algorithm for the signature in the certificate to be issued. They are specified in the "signature_algorithms_cert" list. The naming is inspired in RFC 8446.
 
-- Select a KEM or a signature algorithm for the Subject's public key in the certificate to be issued. They are specified in the "certificate_pubkey" list. 
+- Select a KEM or a signature algorithm for the Subject's public key in the certificate to be issued. They are specified in the "certificate_pubkey" list.
 
-Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs. 
+Given that a KEMTLS certificate handles two algorithms (a KEM and a signature), and the possible trade-offs in different use cases (such as IoT {{?KEMTLS-BENCH-IOT}}, this document specifies clients to negotiate not only what is the desired KEM scheme, but also what is the signature that the Issuer CA is willing to use. Such a detailed negotiation for the certificate better address the application's needs.
 
 ## Cert-algorithms endpoint
 
@@ -214,7 +213,7 @@ Upon HTTP GET requests to the /cert-algorithms endpoint, ACME servers reply with
 
 Servers MUST provide such a list with at least one algorithm (default). The structure of the list allows the client to choose different algorithms for composing the certificate. Moreover, the OIDs presented on this list are subject to change until the final version of this document is released. Other algorithms can be added (replacing "OthersTDB" in the list), for example including non-PQC algorithms such as "RS256" (RFC 7518). Lastly, hybrid modes are specified here based on the IETF I-Ds (such as {{!I-D.ounsworth-pq-composite-sigs}}). Their OID is represented by a DER-encoded OID concatenation (following {{!I-D.ounsworth-pq-composite-sigs}}, Table 1). Hybrids are RECOMMENDED to be in the default choice for algorithm selection.
 
-Note that this list allows a client to ask for a KEMTLS certificate by selecting "ML-KEM-*" using the "certificate_pubkey" sublist. 
+Note that this list allows a client to ask for a KEMTLS certificate by selecting "ML-KEM-*" using the "certificate_pubkey" sublist.
 
 # KEM Certificate Issuance Modes
 
@@ -350,9 +349,9 @@ When receiving an encrypting certificate, it concludes the 1-RTT mode. Therefore
 
 # KEM-Certificate Revocation Procedure
 
-Figure 4 illustrates the revocation procedure for a KEM certificate. The endpoint ("/revokeCert") is the same to revoke all types of certificates. Therefore, old clients remain compatible to this proposal. 
+Figure 4 illustrates the revocation procedure for a KEM certificate. The endpoint ("/revokeCert") is the same to revoke all types of certificates. Therefore, old clients remain compatible to this proposal.
 
-Servers process revocation requests similarly. If the certificate inside of the revocation request is a KEM, then the server sends a challenge ciphertext to the client. The client then proves ownership of the private key by decapsulating and POSTing to the /kem-confirm endpoint, allowing revocation. 
+Servers process revocation requests similarly. If the certificate inside of the revocation request is a KEM, then the server sends a challenge ciphertext to the client. The client then proves ownership of the private key by decapsulating and POSTing to the /kem-confirm endpoint, allowing revocation.
 
 <figure><artwork>
 +------+                       +------+
@@ -380,12 +379,11 @@ Servers process revocation requests similarly. If the certificate inside of the 
 
 This revocation procedure still uses signatures from the account keys (for the requests), but modifies ACME to support revoking KEM certificates. Servers COULD support the following optimization to this procedure:
 
-1. Clients and Servers store Z from the Issuance Process (Section 3). 
+1. Clients and Servers store Z from the Issuance Process (Section 3).
 
 2. A client could reuse Z from the Issuance process to revoke the certificate (appending Z as an optional JSON field in the Revocation Request). This way the revocation is done in 1-RTT, saves computational time (one encapsulation and one decapsulation) but requires state: clients and servers need to store key confirmations (Z).
 
 3. Servers match the stored Z with the one appended in the revocation request. If it matches, servers reply the result.
-
 
 
 # Conventions and Definitions
@@ -405,7 +403,7 @@ As in RFC 8555, Section 7.1.1, the directory object contains the required URLs t
 
 - Field: "key-confirm"; URL in Value: Key confirmation.
 
-- Field: "cert-algorithms"; URL in Value: Certificate Algorithms List. 
+- Field: "cert-algorithms"; URL in Value: Certificate Algorithms List.
 
 
 # Security Considerations
@@ -420,7 +418,7 @@ The 3-RTT mode provides explicit key confirmation, which complies with RFC 8555,
 
 ## Revocation Considerations
 
-Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. The revocation procedure described in this document REQUIRES account keys to sign requests and Proof-of-Possession for the KEM certificate. 
+Section 7.6 (RFC 8555 {{!RFC8555}}) allows clients to sign a revocation request using the certificate's private key under revocation or by using account keys. The revocation procedure described in this document REQUIRES account keys to sign requests and Proof-of-Possession for the KEM certificate.
 
 
 # IANA Considerations
